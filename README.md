@@ -1,0 +1,3 @@
+### Goal
+
+Hopefully, I can learn how to write rust...
