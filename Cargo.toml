@@ -20,6 +20,22 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 [dev-dependencies]
 reqwest = "0.11"
 
+[build-dependencies]
+syn = "1"
+
+# Using table-like toml syntax to avoid a super-long line
+[dependencies.sqlx]
+version = "0.5.7"
+default-features = false
+features = [
+  "runtime-actix-rustls", # Tells sqlx touse the actix runtime for its futures and rust ls as TLS backend
+  "macros",               # Gives us access to sqlx::query! and sqlx::query_as!, for writing queries
+  "postgres",             # Unlocks Postgres specific functionality (non-standard SQL types)
+  "uuid",                 # Adds support for mapping SQL UUIDs to the `Uuid` type from `uuid` create
+  "chrono",               # Add supports for mapping SQL timestamptz to the DateTime<T> type from chrono crate
+  "migrate",              # Gives the same functions used under the hood by `sqlx-cli` to manage migrations.
+]
+
 [lib]
 # We could use any path here, but we are following the community convention
 # We could specify a library name using the `name` filed. If unspecified,
