@@ -52,6 +52,18 @@ pub async fn spawn_app() -> TestApp {
     }
 }
 
+impl TestApp {
+    pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(&format!("{}/subscriptions", &self.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+}
+
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // Create database
     let mut connection = PgConnection::connect_with(&config.without_db())
