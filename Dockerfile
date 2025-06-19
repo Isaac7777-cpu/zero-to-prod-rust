@@ -1,15 +1,15 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.87.0 as chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.87.0 AS chef
 WORKDIR /app
 RUN apt update && apt install lld clang -y
 
 # ---- PLANNER STAGE ----
-FROM chef as planner
+FROM chef AS planner
 COPY . .
 # Compute a lock-like file for our project
 RUN cargo chef prepare --recipe-path recipe.json
 
 # ---- BUILDER STAGE ----
-FROM chef as builder
+FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
 # Build our project dependencies, not our application!
 RUN cargo chef cook --release --recipe-path recipe.json
@@ -31,5 +31,5 @@ RUN apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/zero2prod zero2prod
 COPY configuration configuration
-ENV APP_ENVIRONMENT production
+ENV APP_ENVIRONMENT=production
 
