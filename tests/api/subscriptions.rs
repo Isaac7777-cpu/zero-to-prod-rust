@@ -21,14 +21,33 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 
     // Assert
     assert_eq!(200, response.status().as_u16());
+}
 
-    let saved = sqlx::query!("SELECT email, name FROM subscriptions",)
+#[tokio::test]
+async fn subscribe_persists_the_new_subscriber() {
+    // Arrange
+    let test_app = spawn_app().await;
+    let body = "name=isaac%20leong&email=isaacleong%40gmail.com";
+
+    // New section!
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&test_app.email_server)
+        .await;
+
+    // Act
+    test_app.post_subscriptions(body.into()).await;
+
+    // Assertion
+    let saved = sqlx::query!("SELECT email, name, status FROM subscriptions",)
         .fetch_one(&test_app.db_pool)
         .await
         .expect("Failed to fetch saved subscriptions.");
 
     assert_eq!(saved.email, "isaacleong@gmail.com");
     assert_eq!(saved.name, "isaac leong");
+    assert_eq!(saved.status, "pending_confirmation");
 }
 
 #[tokio::test]
@@ -80,7 +99,7 @@ async fn subscribe_returns_a_200_when_fields_are_present_but_empty() {
 }
 
 #[tokio::test]
-async fn subscribe_sends_a_confirmation_email_for_valid_data() {
+async fn subscribe_sends_a_confirmation_email_with_a_link() {
     let app = spawn_app().await;
     let body = "name=isaac%20leong&email=isaacleong%40gmail.com";
 
@@ -96,23 +115,7 @@ async fn subscribe_sends_a_confirmation_email_for_valid_data() {
     // Assert
     // Get the first intercepted request
     let email_request = &app.email_server.received_requests().await.unwrap()[0];
+    let confirmation_links = app.get_confirmation_links(&email_request);
 
-    // Parse the body as JSON, starting from raw bytes
-    let body: serde_json::Value = serde_json::from_slice(&email_request.body).unwrap();
-
-    // Extract the link from one of the request fields.
-    let get_link = |s: &str| {
-        let links: Vec<_> = linkify::LinkFinder::new()
-            .links(s)
-            .filter(|l| *l.kind() == linkify::LinkKind::Url)
-            .collect();
-        assert_eq!(links.len(), 1);
-        links[0].as_str().to_owned()
-    };
-
-    let html_link = get_link(body["HtmlBody"].as_str().unwrap());
-    let text_link = get_link(body["TextBody"].as_str().unwrap());
-
-    // The two links should be identical
-    assert_eq!(html_link, text_link);
+    assert_eq!(confirmation_links.html, confirmation_links.plain_text);
 }
