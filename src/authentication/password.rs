@@ -128,4 +128,3 @@ fn compute_password_hash(password: Secret<String>) -> Result<Secret<String>, any
     .to_string();
     Ok(Secret::new(password_hash))
 }
-
