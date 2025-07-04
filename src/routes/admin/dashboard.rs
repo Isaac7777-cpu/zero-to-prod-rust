@@ -38,7 +38,7 @@ pub async fn admin_dashboard(
                         </form>
                    </li>
                    <li>
-                        <form name = "sendNewsletter">
+                        <form name = "sendNewsletter" action="/admin/newsletters" method="get">
                             <input type="submit" value="Send Newsletter">
                         </form>
                    </li>
