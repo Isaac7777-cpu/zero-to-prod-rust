@@ -68,7 +68,7 @@ pub async fn spawn_app() -> TestApp {
         .unwrap();
 
     let test_app = TestApp {
-        address: format!("http://127.0.0.1:{}", application_port),
+        address: format!("http://127.0.0.1:{application_port}"),
         port: application_port,
         db_pool: get_connection_pool(&configuration.database),
         email_server,
@@ -103,10 +103,7 @@ impl TestApp {
 
         let html = get_link(body["HtmlBody"].as_str().unwrap());
         let plain_text = get_link(body["TextBody"].as_str().unwrap());
-        ConfirmationLinks {
-            html,
-            plain_text,
-        }
+        ConfirmationLinks { html, plain_text }
     }
 
     pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
